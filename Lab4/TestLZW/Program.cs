@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Compressors;
+using System;
 
 namespace TestLZW
 {
@@ -6,7 +7,12 @@ namespace TestLZW
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("Ingrese el texto para codificar");
+            string text = Console.ReadLine();
+            var lzw = new LZWCompressor("..//..//..");
+            Console.WriteLine("El texto comprimido es:");
+            Console.WriteLine(lzw.ShowCompress(text));
+            Console.ReadLine();
         }
     }
 }
