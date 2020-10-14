@@ -57,7 +57,7 @@ namespace Compressors
             string final = "";
             while (binary.Length > 0)
             {
-                final += ConvertToChar(binary.Substring(0, 8));
+                final += Convert.ToChar(ConvertToInt(binary.Substring(0, 8)));
                 binary = binary.Remove(0, 8);
             }
             return Convert.ToChar(size) + metadata + final;
@@ -67,11 +67,11 @@ namespace Compressors
         {
             string text = ConvertToString(array);
             string lzw = Convert.ToChar(currentName.Length) + currentName + ShowCompress(text);
-            string path = Path + "\\" + newName + ".huff";
+            string path = Path + "\\" + newName + ".lzw";
             using StreamWriter writer = new StreamWriter(path, false);
             writer.Write(lzw);
             writer.Close();
-            var comp = new Compression { OriginalName = currentName, CompressedFileName = newName + ".huff", CompressedFilePath = path };
+            var comp = new Compression { OriginalName = currentName, CompressedFileName = newName + ".lzw", CompressedFilePath = path };
             comp.CompressionRatio = Math.Round(Convert.ToDouble(lzw.Length) / Convert.ToDouble(text.Length), 4);
             comp.CompressionFactor = Math.Round(Convert.ToDouble(text.Length) / Convert.ToDouble(lzw.Length), 4);
             comp.ReductionPercentage = Math.Round(100 * (Convert.ToDouble(text.Length) - Convert.ToDouble(lzw.Length)) / Convert.ToDouble(text.Length), 4);
@@ -91,7 +91,7 @@ namespace Compressors
             return size;
         }
 
-        private char ConvertToChar(string binary)
+        private int ConvertToInt(string binary)
         {
             int value = 0;
             while (binary.Length > 0)
@@ -100,7 +100,7 @@ namespace Compressors
                 value += int.Parse(binary.Substring(0, 1));
                 binary = binary.Remove(0, 1);
             }
-            return Convert.ToChar(value);
+            return value;
         }
 
         private string ConvertToBinary(char value, int digits)
@@ -123,23 +123,29 @@ namespace Compressors
             var size = Convert.ToInt32(text[0]);
             var letters = Convert.ToInt32(text[1]);
             text = text.Remove(0, 2);
-            var list = new Dictionary<string, int>();
+            var list = new Dictionary<int, string>();
             for (int i = 0; i < letters; i++)
             {
-                list.Add(text.Substring(i, 1), list.Count + 1);
+                list.Add(list.Count + 1, text.Substring(i, 1));
             }
             text = text.Remove(0, letters);
             string binary = "";
             foreach (var item in text)
                 binary += ConvertToBinary(item, 8);
-            string final = "";
+            var lzw = new List<int>();
             while (binary.Length >= size)
             {
                 if (binary.Substring(0, size) != new string('0', size))
-                {
-                    
-                }
+                    lzw.Add(ConvertToInt(binary.Substring(0, size)));
                 binary = binary.Remove(0, size);
+            }
+            string final = list[lzw[0]];
+            for (int i = 1; i < lzw.Count; i++)
+            {
+                list.Add(list.Count + 1, list[lzw[i - 1]]);
+                if (i > 1)
+                    list[list.Count - 1] += list[lzw[i - 1]].Substring(0, 1);
+                final += list[lzw[i]];
             }
             string path = Path + "\\" + title;
             using var file = new FileStream(path, FileMode.Create);
